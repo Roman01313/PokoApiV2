@@ -1,6 +1,4 @@
-from pyexpat.errors import messages
 from random import randrange, random
-
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 import json
@@ -16,7 +14,7 @@ longpoll = VkLongPoll(vk_session)
 vk = vk_session.get_api()
 
 name = ''
-ability_name = []
+ability_name = ''
 
 req = Request("https://pokeapi.co/api/v2/pokemon/", headers={'User-Agent': 'Mozilla/5.0'})#
 response = urlopen(req)
@@ -26,13 +24,30 @@ req = Request(f"https://pokeapi.co/api/v2/pokemon/?limit={count}", headers={'Use
 response = urlopen(req)
 pokemons = json.loads(response.read())["results"]
 
-def get_data_from(url, key):
+
+for event in longpoll.listen():
+    if event.type == VkEventType.MESSAGE_NEW and event.text:
+        for pokemon in pokemons:
+            if (event.text).lower() == pokemon['name']:
+                print(pokemon['url'])
+                req = Request(pokemon['url'], headers={'User-Agent': 'Mozilla/5.0'})
+                response = urlopen(req)
+                desc = json.loads(response.read())
+                message = f"Имя:{desc['name']}\nРост:{desc['height']}\nВес:{desc['weight']}"
+                
+                vk.messages.send(user_id=event.user_id, message=message, random_id=randrange(1,10000))
+
+
+
+
+
+'''def get_data_from(url, key):
     req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})  #
     response = urlopen(req)
     data = json.loads(response.read())[key]
-    return data
+    return data'''
 
-for event in longpoll.listen():
+'''for event in longpoll.listen():
     if event.type == VkEventType.MESSAGE_NEW and event.text:
         for pokemon in pokemons:
             if (event.text).lower() == pokemon['name']:
@@ -40,26 +55,13 @@ for event in longpoll.listen():
                 abilitys = get_data_from(pokemon['url'], 'abilities')
                 # vk.messages.send(user_id=event.user_id, message=name, random_id=randrange(0,10000))
                 for ability in abilitys:
-                    ability_name.append(ability['ability']['name'])
+                    ability_name = ability['ability']['name']
                     print(ability_name)
                     effects_desc = get_data_from(ability['ability']['url'], 'effect_changes')
                     vk.messages.send(user_id=event.user_id,
                                      message=f'Name: {name}, '
                                      f'Ability:   {ability_name}',
-                                     random_id=randrange(0, 10000))
-
-
-
-
-
-
-
-
-
-
-
-
-
+                                     random_id=randrange(0, 10000))'''
         # for el in pokemons:
         #     if (event.text).lower() == el['name']:
         #         req = Request(el['url'], headers={'User-Agent': 'Mozilla/5.0'})
